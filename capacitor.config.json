@@ -1,0 +1,8 @@
+{
+  "appId": "com.sanadads.app",
+  "appName": "Sanad Ads",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
