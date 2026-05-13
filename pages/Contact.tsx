@@ -23,7 +23,7 @@ const Contact: React.FC = () => {
                   <Phone size={24} />
                 </div>
               </div>
-              <div>
+              <div dir="ltr" className="text-right flex flex-col items-end">
                 <div className="text-xs text-white/40 uppercase tracking-widest mb-1 font-bold">الهاتف المباشر</div>
                 <div className="text-xl font-mono">+216 92 942 482</div>
               </div>
@@ -35,21 +35,9 @@ const Contact: React.FC = () => {
                   <Smartphone size={24} />
                 </div>
               </div>
-              <div>
+              <div dir="ltr" className="text-right flex flex-col items-end">
                 <div className="text-xs text-white/40 uppercase tracking-widest mb-1 font-bold">واتساب الأعمال</div>
                 <div className="text-xl font-mono text-[#25D366]">+216 92 942 482</div>
-              </div>
-            </div>
-
-            <div className="flex gap-6 items-center flex-row-reverse text-right">
-              <div className="w-14 h-14 rounded-2xl gold-gradient p-[1px] shrink-0">
-                <div className="w-full h-full rounded-2xl bg-black flex items-center justify-center text-gold">
-                  <Mail size={24} />
-                </div>
-              </div>
-              <div>
-                <div className="text-xs text-white/40 uppercase tracking-widest mb-1 font-bold">البريد الإلكتروني</div>
-                <div className="text-xl">contact@sanadads.com</div>
               </div>
             </div>
             
@@ -91,7 +79,7 @@ const Contact: React.FC = () => {
               </div>
               <div>
                 <label className="text-xs text-white/40 mb-2 block mr-1">رقم الهاتف</label>
-                <input type="tel" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:border-gold outline-none transition-all" placeholder="216+" />
+                <input type="tel" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:border-gold outline-none transition-all text-left" placeholder="+216" dir="ltr" />
               </div>
             </div>
             

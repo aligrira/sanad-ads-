@@ -296,7 +296,7 @@ const RequestService: React.FC = () => {
                   value={formData.phone}
                   onChange={(e) => setFormData({...formData, phone: e.target.value})}
                   className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:border-gold outline-none transition-all" 
-                  placeholder="216+" 
+                  placeholder="+216"
                 />
               </div>
             </div>
