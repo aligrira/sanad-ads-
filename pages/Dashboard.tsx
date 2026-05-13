@@ -170,7 +170,15 @@ const Dashboard: React.FC = () => {
                         <span className="text-[10px] font-bold">D17 (بريدي)</span>
                       </div>
                       <div className="flex justify-between items-center bg-black/40 p-3 rounded-xl border border-white/5">
-                        <span className="text-gold font-mono font-bold text-sm">5359 4020 4169 0664</span>
+                        <span 
+                          className="text-gold font-mono font-bold text-sm tracking-wider inline-flex gap-1" 
+                          dir="ltr"
+                          style={{ direction: 'ltr', unicodeBidi: 'bidi-override' }}
+                        >
+                          {'5359 4020 4169 0664'.split(' ').map((chunk, i) => (
+                            <span key={i}>{chunk}</span>
+                          ))}
+                        </span>
                         <span className="text-[10px] font-bold">بطاقة بريدية</span>
                       </div>
                       <button 

@@ -124,8 +124,14 @@ const Packages: React.FC = () => {
             <div>
               <h3 className="font-bold mb-2">البطاقة البريدية</h3>
               <p className="text-white/60 text-sm mb-2">يمكنك أيضاً إيداع الأموال عبر البطاقة البريدية رقم:</p>
-              <div className="text-xl font-mono text-gold font-bold tracking-wider">
-                5359 4020 4169 0664
+              <div 
+                className="text-xl font-mono text-gold font-bold tracking-wider inline-flex gap-2" 
+                dir="ltr"
+                style={{ direction: 'ltr', unicodeBidi: 'bidi-override' }}
+              >
+                {'5359 4020 4169 0664'.split(' ').map((chunk, i) => (
+                  <span key={i}>{chunk}</span>
+                ))}
               </div>
             </div>
           </div>

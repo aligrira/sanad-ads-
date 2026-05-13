@@ -63,20 +63,7 @@ const Home: React.FC = () => {
               </Link>
             </div>
 
-            <div className="grid grid-cols-3 gap-8 mt-12">
-              <div>
-                <div className="text-3xl font-bold text-gold">150+</div>
-                <div className="text-xs text-white/50 uppercase tracking-wider">مشروع ناجح</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-gold">50+</div>
-                <div className="text-xs text-white/50 uppercase tracking-wider">علامة تجارية</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-gold">100%</div>
-                <div className="text-xs text-white/50 uppercase tracking-wider">رضا العملاء</div>
-              </div>
-            </div>
+
           </motion.div>
 
           <motion.div
@@ -157,36 +144,6 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="px-6 py-20 bg-white/[0.02] -mx-6">
-        <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold luxury-text mb-4">ماذا يقول عملاؤنا</h2>
-            <div className="flex justify-center gap-1 text-gold">
-              {[...Array(5)].map((_, i) => <Star key={i} size={16} fill="currentColor" />)}
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="glass p-8 rounded-3xl relative">
-                <div className="text-4xl text-gold absolute -top-4 -right-2 opacity-20">"</div>
-                <p className="text-white/70 italic mb-6 leading-relaxed">
-                  "تعاملنا مع سند للإعلان كان نقطة تحول لمشروعنا. الاحترافية في التصميم ودقة الاستهداف في الحملات الإعلانية ساهمت في زيادة مبيعاتنا بشكل ملحوظ."
-                </p>
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-navy border border-gold/30" />
-                  <div>
-                    <div className="font-bold text-sm">محمد أحمد</div>
-                    <div className="text-[10px] text-gold uppercase">مدير شركة النور</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      
       {/* CTA Section */}
       <section className="px-6 text-center">
         <div className="gold-gradient p-[1px] rounded-[40px]">

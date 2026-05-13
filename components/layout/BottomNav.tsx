@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Briefcase, LayoutGrid, User, Bell, Video } from 'lucide-react';
+import { Home, Briefcase, LayoutGrid, User, Bell, Video, CreditCard } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../lib/AuthContext';
 
@@ -12,9 +12,8 @@ export const BottomNav: React.FC = () => {
   
   const navItems = [
     { icon: Home, label: 'الرئيسية', path: '/' },
-    { icon: Briefcase, label: 'الخدمات', path: '/services' },
-    { icon: Video, label: 'الفيديوهات', path: '/videos' },
-    { icon: LayoutGrid, label: 'الأعمال', path: '/portfolio' },
+    { icon: Video, label: 'أعمالنا', path: '/videos' },
+    { icon: CreditCard, label: 'طرق الدفع', path: '/payment-info' },
     { icon: User, label: 'حسابي', path: user ? (isAdmin ? '/admin' : '/dashboard') : '/login' },
   ];
 

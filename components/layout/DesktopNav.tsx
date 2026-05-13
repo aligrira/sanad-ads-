@@ -10,8 +10,7 @@ export const DesktopNav: React.FC = () => {
     { title: 'الرئيسية', path: '/' },
     { title: 'الخدمات', path: '/services' },
     { title: 'طرق الدفع', path: '/payment-info' },
-    { title: 'معرض الأعمال', path: '/portfolio' },
-    { title: 'الفيديوهات', path: '/videos' },
+    { title: 'أعمالنا', path: '/videos' },
     { title: 'الباقات', path: '/packages' },
     { title: 'تواصل معنا', path: '/contact' },
   ];
