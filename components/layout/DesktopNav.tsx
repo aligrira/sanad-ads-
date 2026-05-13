@@ -1,11 +1,13 @@
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { cn } from '../../lib/utils';
-import { Phone, User } from 'lucide-react';
+import { Phone, User, Bell } from 'lucide-react';
 import { useAuth } from '../../lib/AuthContext';
+import { useNotifications } from '../../lib/useNotifications';
 
 export const DesktopNav: React.FC = () => {
   const { user } = useAuth();
+  const { unreadCount } = useNotifications();
   const navLinks = [
     { title: 'الرئيسية', path: '/' },
     { title: 'الخدمات', path: '/services' },
@@ -58,13 +60,32 @@ export const DesktopNav: React.FC = () => {
             </Link>
           )}
           {user ? (
-            <Link 
-              to="/dashboard" 
-              className="text-gold hover:text-white flex items-center gap-2 text-sm font-bold transition-colors"
-            >
-              <User size={18} />
-              حسابي
-            </Link>
+            <>
+              <Link 
+                to="/notifications" 
+                className="relative text-white/70 hover:text-gold transition-colors p-2"
+              >
+                <Bell size={20} />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#0a0f16]" />
+                )}
+              </Link>
+              <Link 
+                to="/dashboard" 
+                className="text-gold hover:text-white flex items-center gap-2 text-sm font-bold transition-colors"
+              >
+                <User size={18} />
+                حسابي
+              </Link>
+              <button 
+                onClick={() => {
+                  import('../../lib/firebase').then(({ auth }) => auth.signOut());
+                }}
+                className="text-white/40 hover:text-red-400 text-sm font-bold transition-colors ml-4"
+              >
+                تسجيل الخروج
+              </button>
+            </>
           ) : (
             <Link 
               to="/login" 

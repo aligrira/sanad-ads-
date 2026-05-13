@@ -160,50 +160,6 @@ const Home: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* PWA Installation Section */}
-      <section className="px-6 py-20 bg-gold/[0.03] border-y border-gold/10 -mx-6">
-        <div className="container mx-auto max-w-4xl">
-          <div className="flex flex-col md:flex-row items-center gap-12">
-            <div className="flex-1 space-y-6 text-center md:text-right">
-              <div className="inline-flex items-center gap-2 bg-gold/10 text-gold px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest">
-                <Smartphone size={14} />
-                تثبيت التطبيق
-              </div>
-              <h2 className="text-3xl font-bold luxury-text">استخدم "سند" كتطبيق على هاتفك</h2>
-              <p className="text-white/60 leading-relaxed">
-                لا حاجة لتحميل ملف APK! يمكنك تثبيت الموقع مباشرة على هاتفك ليعمل كأنه تطبيق (PWA). أسرع، أخفّ، ويصلك التحديثات فورياً.
-              </p>
-              <div className="space-y-4">
-                <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10">
-                  <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center text-gold shrink-0">1</div>
-                  <p className="text-sm">افتح الموقع من متصفح <b>Chrome</b> أو <b>Safari</b></p>
-                </div>
-                <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10">
-                  <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center text-gold shrink-0">2</div>
-                  <p className="text-sm">اضغط على <b>الخيارات</b> (النقاط الثلاث) أو زر <b>المشاركة</b></p>
-                </div>
-                <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10">
-                  <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center text-gold shrink-0">3</div>
-                  <p className="text-sm">اختر <b>"إضافة إلى الشاشة الرئيسية"</b> (Add to Home Screen)</p>
-                </div>
-              </div>
-            </div>
-            <div className="flex-1 relative">
-              <div className="w-64 h-[500px] bg-black border-8 border-white/10 rounded-[3rem] mx-auto shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-white/10 rounded-b-2xl z-10" />
-                <div className="absolute inset-0 gold-gradient opacity-10" />
-                <div className="h-full w-full flex flex-col items-center justify-center p-8 text-center">
-                  <div className="w-20 h-20 rounded-3xl gold-gradient flex items-center justify-center text-black text-4xl font-bold mb-6 shadow-lg shadow-gold/20">S</div>
-                  <div className="w-32 h-2 bg-white/10 rounded-full mb-2" />
-                  <div className="w-24 h-2 bg-white/5 rounded-full" />
-                </div>
-              </div>
-              <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-gold/20 rounded-full blur-3xl" />
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
   );
 };

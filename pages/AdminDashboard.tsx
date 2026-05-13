@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { Package, Clock, CheckCircle2, XCircle, Search, MessageSquare, ExternalLink, Loader2, ArrowRight, Trash2, User, Video } from 'lucide-react';
+import { Package, Clock, CheckCircle2, XCircle, Search, MessageSquare, ExternalLink, Loader2, ArrowRight, Trash2, User, Video, LogOut, Send } from 'lucide-react';
 import { db, auth, handleFirestoreError, OperationType } from '../lib/firebase';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, addDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
 
@@ -16,6 +16,7 @@ const AdminDashboard: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [customMessages, setCustomMessages] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const userEmail = user?.email?.toLowerCase() || '';
@@ -53,13 +54,70 @@ const AdminDashboard: React.FC = () => {
     };
   }, [user, navigate]);
 
+  const handleLogout = async () => {
+    await auth.signOut();
+    navigate('/login');
+  };
+
   const updateStatus = async (requestId: string, newStatus: string) => {
     try {
       await updateDoc(doc(db, 'serviceRequests', requestId), {
         status: newStatus
       });
+      
+      const req = requests.find(r => r.id === requestId);
+      if (req?.userId) {
+        let title = '';
+        let body = '';
+        if (newStatus === 'in-progress') {
+          title = 'طلبك قيد التنفيذ';
+          body = `بدأ فريقنا الدخول والعمل على طلبك "${req.service}".`;
+        } else if (newStatus === 'completed') {
+          title = 'اكتمل طلبك!';
+          body = `تم الانتهاء من "${req.service}". يرجى التحقق من الرسائل أو لوحة التحكم.`;
+        } else if (newStatus === 'cancelled') {
+          title = 'تم إلغاء طلبك';
+          body = `عذراً، تم إلغاء طلبك "${req.service}". يرجى التواصل معنا لمزيد من التفاصيل.`;
+        }
+
+        if (title) {
+          try {
+            await addDoc(collection(db, 'notifications'), {
+              userId: req.userId,
+              title,
+              body,
+              type: 'order',
+              read: false,
+              createdAt: Date.now()
+            });
+          } catch (notifError) {
+            console.error("Notification Error:", notifError);
+          }
+        }
+      }
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `serviceRequests/${requestId}`);
+    }
+  };
+
+  const sendCustomMessage = async (userId: string, requestId: string) => {
+    const msg = customMessages[requestId];
+    if (!msg || !msg.trim()) return;
+    
+    try {
+      await addDoc(collection(db, 'notifications'), {
+        userId,
+        title: 'رسالة إدارية',
+        body: msg.trim(),
+        type: 'system',
+        read: false,
+        createdAt: Date.now()
+      });
+      alert('تم إرسال الإشعار للعميل بنجاح');
+      setCustomMessages(prev => ({ ...prev, [requestId]: '' }));
+    } catch (error) {
+      console.error("Custom Notification Error:", error);
+      alert('خطأ أثناء إرسال الرسالة');
     }
   };
 
@@ -116,20 +174,29 @@ const AdminDashboard: React.FC = () => {
           <p className="text-white/40">مرحباً بك يا مسؤول.</p>
         </div>
         
-        <div className="flex gap-4 p-1 bg-white/5 rounded-2xl border border-white/10">
-          <button
-            onClick={() => setActiveTab('requests')}
-            className={`px-8 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'requests' ? 'bg-gold text-black' : 'text-white/50 hover:text-white'}`}
+        <div className="flex flex-col md:flex-row gap-4 items-center">
+          <div className="flex gap-4 p-1 bg-white/5 rounded-2xl border border-white/10">
+            <button
+              onClick={() => setActiveTab('requests')}
+              className={`px-8 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'requests' ? 'bg-gold text-black' : 'text-white/50 hover:text-white'}`}
+            >
+              <Package size={18} />
+              الطلبات
+            </button>
+            <button
+              onClick={() => setActiveTab('users')}
+              className={`px-8 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'users' ? 'bg-gold text-black' : 'text-white/50 hover:text-white'}`}
+            >
+              <User size={18} />
+              العملاء
+            </button>
+          </div>
+          <button 
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-white/50 hover:text-red-400 transition-colors p-3 bg-red-500/5 rounded-2xl border border-red-500/10"
           >
-            <Package size={18} />
-            الطلبات
-          </button>
-          <button
-            onClick={() => setActiveTab('users')}
-            className={`px-8 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'users' ? 'bg-gold text-black' : 'text-white/50 hover:text-white'}`}
-          >
-            <User size={18} />
-            العملاء
+            <LogOut size={20} />
+            <span className="text-sm font-bold">تسجيل الخروج</span>
           </button>
         </div>
       </div>
@@ -269,22 +336,42 @@ const AdminDashboard: React.FC = () => {
                     </div>
 
                     <div className="flex flex-col gap-3 pt-4">
-                      <a 
-                        href={`https://wa.me/${req.phone.replace(/[^0-9]/g, '')}`} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="w-full bg-[#25D366] text-white py-4 rounded-2xl flex items-center justify-center gap-2 font-bold hover:scale-105 transition-transform"
-                      >
-                        تواصل واتساب
-                        <MessageSquare size={18} />
-                      </a>
-                      <a 
-                        href={`tel:${req.phone}`}
-                        className="w-full bg-white/10 text-white py-4 rounded-2xl flex items-center justify-center gap-2 font-bold hover:bg-white/20 transition-colors"
-                      >
-                        اتصال هاتفي
-                        <ExternalLink size={18} />
-                      </a>
+                      <div className="flex gap-2">
+                        <a 
+                          href={`https://wa.me/${req.phone.replace(/[^0-9]/g, '')}`} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="flex-1 bg-[#25D366] text-white py-4 rounded-2xl flex items-center justify-center gap-2 font-bold hover:scale-105 transition-transform"
+                        >
+                          <MessageSquare size={18} />
+                        </a>
+                        <a 
+                          href={`tel:${req.phone}`}
+                          className="flex-1 bg-white/10 text-white py-4 rounded-2xl flex items-center justify-center gap-2 font-bold hover:bg-white/20 transition-colors"
+                        >
+                          <ExternalLink size={18} />
+                        </a>
+                      </div>
+
+                      <div className="pt-4 border-t border-white/10 mt-2">
+                        <span className="text-[10px] text-white/40 mb-2 block uppercase font-bold tracking-widest">إرسال إشعار للعميل</span>
+                        <div className="flex flex-col gap-2">
+                          <textarea
+                            className="bg-black/40 border border-white/5 rounded-xl p-3 text-sm resize-none focus:border-gold outline-none h-20"
+                            placeholder="اكتب رسالة أو ملاحظة وسيتلقاها العميل كإشعار..."
+                            value={customMessages[req.id] || ''}
+                            onChange={(e) => setCustomMessages(prev => ({ ...prev, [req.id]: e.target.value }))}
+                          />
+                          <button
+                            onClick={() => sendCustomMessage(req.userId, req.id)}
+                            className="w-full bg-gold/10 text-gold hover:bg-gold hover:text-black py-3 rounded-xl flex items-center justify-center gap-2 font-bold transition-all"
+                          >
+                            إرسال الرسالة
+                            <Send size={16} />
+                          </button>
+                        </div>
+                      </div>
+
                       <button 
                         onClick={() => deleteRequest(req.id)}
                         className="w-full bg-red-500/10 text-red-500 py-4 rounded-2xl flex items-center justify-center gap-2 font-bold hover:bg-red-500 hover:text-white transition-all mt-4"

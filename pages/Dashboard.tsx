@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { User, Settings, Package, History, LogOut, Bell, ChevronLeft, Loader2, CreditCard, Trash2, Smartphone } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
+import { useNotifications } from '../lib/useNotifications';
 import { auth, db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { collection, query, where, orderBy, getDocs, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
+  const { unreadCount } = useNotifications();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,7 +87,7 @@ const Dashboard: React.FC = () => {
   const stats = [
     { label: 'الطلبات النشطة', value: orders.filter(o => o.status !== 'completed' && o.status !== 'cancelled').length.toString(), icon: Package, color: 'text-gold' },
     { label: 'إجمالي المشروعات', value: orders.length.toString(), icon: History, color: 'text-blue-400' },
-    { label: 'الإشعارات', value: '0', icon: Bell, color: 'text-red-400' },
+    { label: 'الإشعارات', value: unreadCount.toString(), icon: Bell, color: 'text-red-400' },
   ];
 
   return (
@@ -227,18 +229,36 @@ const Dashboard: React.FC = () => {
               <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
             </Link>
             {[
-              { label: 'تعديل الملف الشخصي', icon: User },
-              { label: 'إشعارات التطبيق', icon: Bell },
-              { label: 'تغيير كلمة المرور', icon: Settings },
+              { label: 'تعديل الملف الشخصي', icon: User, path: '/dashboard' },
+              { label: 'إشعارات التطبيق', icon: Bell, path: '/notifications', badge: unreadCount > 0 ? unreadCount : null },
+              { label: 'تغيير كلمة المرور', icon: Settings, path: '/dashboard' },
             ].map((item, i) => (
-              <button key={item.label} className={`w-full p-6 flex items-center justify-between hover:bg-white/5 transition-colors ${i !== 0 ? 'border-t border-white/5' : ''}`}>
+              <Link 
+                key={item.label} 
+                to={item.path}
+                className={`w-full p-6 flex items-center justify-between hover:bg-white/5 transition-colors block ${i !== 0 ? 'border-t border-white/5' : ''}`}
+              >
                 <div className="flex items-center gap-4">
-                  <item.icon size={18} className="text-white/40" />
+                  <div className="relative">
+                    <item.icon size={18} className="text-white/40" />
+                    {item.badge && (
+                      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-[#0a0f16]" />
+                    )}
+                  </div>
                   <span className="text-sm font-medium">{item.label}</span>
                 </div>
                 <ChevronLeft size={16} className="text-white/20" />
-              </button>
+              </Link>
             ))}
+            <button
+              onClick={handleLogout}
+              className="w-full p-6 flex items-center justify-between hover:bg-red-500/10 transition-colors border-t border-white/5 text-red-500"
+            >
+              <div className="flex items-center gap-4">
+                <LogOut size={18} />
+                <span className="text-sm font-bold">تسجيل الخروج</span>
+              </div>
+            </button>
           </div>
           
           <div className="glass p-6 rounded-[32px] border-gold/10 bg-gold/[0.02]">

@@ -113,7 +113,7 @@ const RequestService: React.FC = () => {
     try {
       const uploadedUrls = await uploadFiles();
       
-      await addDoc(collection(db, 'serviceRequests'), {
+      const requestDoc = await addDoc(collection(db, 'serviceRequests'), {
         userId: user?.uid || null,
         service: selectedService,
         name: formData.name,
@@ -126,6 +126,22 @@ const RequestService: React.FC = () => {
         status: 'pending',
         createdAt: serverTimestamp()
       });
+      
+      if (user?.uid) {
+        try {
+          await addDoc(collection(db, 'notifications'), {
+            userId: user.uid,
+            title: 'تم إرسال طلبك بنجاح',
+            body: `لقد استلمنا طلبك لـ "${selectedService}". سيقوم فريقنا بمراجعته قريباً وتحديث الحالة.`,
+            type: 'system',
+            read: false,
+            createdAt: Date.now()
+          });
+        } catch (notifError) {
+          console.error("Failed to add notification:", notifError);
+        }
+      }
+
       setIsSuccess(true);
     } catch (err: any) {
       console.error(err);
