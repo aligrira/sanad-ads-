@@ -17,8 +17,8 @@ const PaymentInfo: React.FC = () => {
       icon: Smartphone,
       color: 'gold',
       action: {
-        text: 'إفتح تطبيق D17',
-        url: 'intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=tn.poste.d17;end'
+        text: 'تحميل / إفتح D17',
+        url: 'https://play.google.com/store/apps/details?id=tn.poste.d17'
       }
     },
     {

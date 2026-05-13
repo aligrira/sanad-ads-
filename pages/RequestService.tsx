@@ -3,9 +3,10 @@ import { motion } from 'motion/react';
 import { Send, CheckCircle2, ChevronRight, Share2, Target, Brush, Video, Layout, BarChart, AlertCircle, Loader2, Package, Upload, Image as ImageIcon, Film, X } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { db, auth, storage } from '../lib/firebase';
+import { db, auth } from '../lib/firebase';
 import { useAuth } from '../lib/AuthContext';
+import { compressImageBase64 } from '../lib/utils';
+
 
 const services = [
   { id: 'video-bundle', icon: Video, title: 'باقة الفيديو والترويج' },
@@ -59,7 +60,17 @@ const RequestService: React.FC = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
-      setSelectedFiles(prev => [...prev, ...filesArray]);
+      const invalidVideos = filesArray.filter(f => f.type.startsWith('video/'));
+      if (invalidVideos.length > 0) {
+        alert('نعتذر، لا يمكن رفع فيديوهات مباشرة حالياً بسبب قيود المساحة. يرجى رفع الفيديوهات على Google Drive أو YouTube ووضع الرابط في المربع المخصص للروابط أسفل هذه الصفحة.');
+      }
+      
+      const imagesArray = filesArray.filter(f => f.type.startsWith('image/'));
+      if (selectedFiles.length + imagesArray.length > 5) {
+        alert('يمكنك رفع 5 صور كحد أقصى.');
+      }
+      const allowedImages = imagesArray.slice(0, 5 - selectedFiles.length);
+      setSelectedFiles(prev => [...prev, ...allowedImages]);
     }
   };
 
@@ -75,27 +86,14 @@ const RequestService: React.FC = () => {
     let completedFiles = 0;
 
     for (const file of selectedFiles) {
-      const storageRef = ref(storage, `requests/${user?.uid || 'anon'}/${Date.now()}_${file.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      await new Promise<void>((resolve, reject) => {
-        uploadTask.on('state_changed', 
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            // Weighted progress calculation
-            const currentFileProgress = progress / totalFiles;
-            const previousFilesProgress = (completedFiles / totalFiles) * 100;
-            setUploadProgress(previousFilesProgress + currentFileProgress);
-          }, 
-          (err) => reject(err), 
-          async () => {
-            const url = await getDownloadURL(uploadTask.snapshot.ref);
-            urls.push(url);
-            completedFiles++;
-            resolve();
-          }
-        );
-      });
+      try {
+        const base64string = await compressImageBase64(file);
+        urls.push(base64string);
+        completedFiles++;
+        setUploadProgress((completedFiles / totalFiles) * 100);
+      } catch (err) {
+        console.error("Image compression error:", err);
+      }
     }
     return urls;
   };
@@ -382,11 +380,11 @@ const RequestService: React.FC = () => {
                      ref={fileInputRef}
                      onChange={handleFileChange}
                      multiple
-                     accept="image/*,video/*"
+                     accept="image/*"
                      className="hidden"
                    />
                    
-                   <p className="text-[10px] text-white/20 text-right italic">يمكنك اختيار عدة صور أو فيديوهات للمنتج مباشرة من جهازك.</p>
+                   <p className="text-[10px] text-white/20 text-right italic">يمكنك اختيار عدة صور للمنتج مباشرة من جهازك. للفيديوهات يرجى استخدام الروابط بالأسفل.</p>
                 </div>
 
                 <div className="text-right">

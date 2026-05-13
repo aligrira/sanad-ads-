@@ -15,6 +15,8 @@ body {
   @apply bg-black text-white selection:bg-gold selection:text-black antialiased;
   font-family: var(--font-sans);
   direction: rtl;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 .luxury-text {

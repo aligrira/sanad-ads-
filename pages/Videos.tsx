@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Play, X, Plus, Upload, Image as ImageIcon, Video, Filter } from 'lucide-react';
-import { auth, db, storage, handleFirestoreError, OperationType } from '../lib/firebase';
+import { auth, db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { collection, onSnapshot, addDoc, query, deleteDoc, doc } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
 const Videos: React.FC = () => {
   const [activeMedia, setActiveMedia] = useState<any | null>(null);
@@ -15,8 +14,9 @@ const Videos: React.FC = () => {
   // Upload modal state
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [file, setFile] = useState<File | null>(null);
+  const [videoLink, setVideoLink] = useState('');
+  const [uploadType, setUploadType] = useState<'image' | 'video'>('image');
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -44,57 +44,39 @@ const Videos: React.FC = () => {
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file) return;
-
     setUploading(true);
-    setUploadProgress(0);
     setUploadError(null);
 
-    const storageRef = ref(storage, `portfolio/${Date.now()}_${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
-
-    // Timeout if stuck at 0% for 15 seconds (likely Storage not enabled or bad rules)
-    const timeoutId = setTimeout(() => {
-      if (uploadTask.snapshot.bytesTransferred === 0) {
-        uploadTask.cancel();
-        setUploading(false);
-        setUploadError('انتهى وقت الرفع. يرجى تفعيل Firebase Storage في حسابك على Firebase، وتحديث قوانين Storage Rules إلى (allow read, write: if true;).');
+    try {
+      if (uploadType === 'image') {
+        if (!file) throw new Error('يرجى اختيار صورة أولاً.');
+        const { compressImageBase64 } = await import('../lib/utils');
+        const downloadURL = await compressImageBase64(file);
+        
+        await addDoc(collection(db, 'portfolio_media'), {
+          videoUrl: downloadURL,
+          type: 'custom_image',
+          createdAt: Date.now()
+        });
+      } else {
+        if (!videoLink) throw new Error('يرجى إضافة رابط الفيديو.');
+        
+        await addDoc(collection(db, 'portfolio_media'), {
+          videoUrl: videoLink,
+          type: 'custom_video',
+          createdAt: Date.now()
+        });
       }
-    }, 15000);
-
-    uploadTask.on(
-      'state_changed',
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        setUploadProgress(progress);
-      },
-      (error) => {
-        clearTimeout(timeoutId);
-        setUploading(false);
-        setUploadError('حدث خطأ. تأكد من تفعيل Storage Rules في Firebase (allow read, write: if true;). التفاصيل: ' + error.message);
-      },
-      async () => {
-        clearTimeout(timeoutId);
-        try {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          const isVideo = file.type.startsWith('video/');
-          
-          await addDoc(collection(db, 'portfolio_media'), {
-            videoUrl: downloadURL,
-            type: isVideo ? 'custom_video' : 'custom_image',
-            createdAt: Date.now()
-          });
-          
-          setShowUploadModal(false);
-          setFile(null);
-        } catch (error) {
-          handleFirestoreError(error, OperationType.CREATE, 'portfolio_media');
-          setUploadError('حدث خطأ أثناء حفظ البيانات في Firestore.');
-        } finally {
-          setUploading(false);
-        }
-      }
-    );
+      
+      setShowUploadModal(false);
+      setFile(null);
+      setVideoLink('');
+    } catch (error: any) {
+      handleFirestoreError(error, OperationType.CREATE, 'portfolio_media');
+      setUploadError(error.message || 'حدث خطأ أثناء حفظ البيانات في مساحة العمل.');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -225,6 +207,21 @@ const Videos: React.FC = () => {
               
               <h2 className="text-xl font-bold mb-6 luxury-text text-right">إضافة صورة أو فيديو</h2>
               
+              <div className="flex gap-2 mb-6" dir="rtl">
+                <button
+                  onClick={() => setUploadType('image')}
+                  className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${uploadType === 'image' ? 'bg-gold text-black' : 'bg-white/10 text-white/60 hover:bg-white/20'}`}
+                >
+                  صورة (من هاتفك)
+                </button>
+                <button
+                  onClick={() => setUploadType('video')}
+                  className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${uploadType === 'video' ? 'bg-gold text-black' : 'bg-white/10 text-white/60 hover:bg-white/20'}`}
+                >
+                  فيديو (رابط)
+                </button>
+              </div>
+
               {uploadError && (
                 <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-xl mb-4 text-sm text-right leading-relaxed" dir="rtl">
                   {uploadError}
@@ -232,29 +229,34 @@ const Videos: React.FC = () => {
               )}
 
               <form onSubmit={handleUpload} className="space-y-6 text-right" dir="rtl">
-                <div>
-                  <label className="block text-sm font-medium text-white/60 mb-2">اختر الملف من هاتفك</label>
-                  <input 
-                    type="file" 
-                    required
-                    accept="video/*,image/*"
-                    onChange={(e) => setFile(e.target.files?.[0] || null)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-gold/50 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-gold file:text-black hover:file:bg-gold-dark cursor-pointer text-sm"
-                  />
-                </div>
+                {uploadType === 'image' ? (
+                  <div>
+                    <label className="block text-sm font-medium text-white/60 mb-2">اختر الصورة من هاتفك</label>
+                    <input 
+                      type="file" 
+                      required
+                      accept="image/*"
+                      onChange={(e) => setFile(e.target.files?.[0] || null)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-gold/50 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-gold file:text-black hover:file:bg-gold-dark cursor-pointer text-sm"
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-sm font-medium text-white/60 mb-2">رابط الفيديو (من جوجل درايف، يوتيوب...)</label>
+                    <input 
+                      type="url" 
+                      required
+                      value={videoLink}
+                      onChange={(e) => setVideoLink(e.target.value)}
+                      placeholder="https://..."
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-gold/50 text-sm text-left dir-ltr"
+                    />
+                  </div>
+                )}
 
                 {uploading ? (
-                  <div className="pt-2">
-                    <div className="flex justify-between text-xs text-white/50 mb-2">
-                      <span>{Math.round(uploadProgress)}%</span>
-                      <span>جاري الرفع...</span>
-                    </div>
-                    <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
-                      <div 
-                        className="bg-gold h-full transition-all duration-300"
-                        style={{ width: `${uploadProgress}%` }}
-                      />
-                    </div>
+                  <div className="pt-2 flex items-center justify-center">
+                    <span className="text-gold font-bold">جاري الرفع...</span>
                   </div>
                 ) : (
                   <button 
@@ -262,7 +264,7 @@ const Videos: React.FC = () => {
                     className="w-full bg-gold text-black font-bold py-3 rounded-xl flex justify-center items-center gap-2 hover:bg-gold-dark transition-colors text-sm sm:text-base mt-4"
                   >
                     <Upload size={20} />
-                    رفع الملف
+                    {uploadType === 'image' ? 'رفع الصورة' : 'إضافة الفيديو'}
                   </button>
                 )}
               </form>
