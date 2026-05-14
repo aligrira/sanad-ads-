@@ -30,7 +30,7 @@ const Portfolio: React.FC = () => {
     <div className="pt-32 pb-20 px-6 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-16">
         <div>
-          <h1 className="text-4xl lg:text-6xl font-bold luxury-text mb-4">معرض <span className="gold-text-gradient">الأعمال</span></h1>
+          <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold luxury-text mb-4">معرض <span className="gold-text-gradient">الأعمال</span></h1>
           <p className="text-white/60 max-w-xl">استكشف بعض المشاريع التي قمنا بتنفيذها مؤخراً وساهمت في نجاح عملائنا.</p>
         </div>
         <div className="flex gap-4">

@@ -145,24 +145,36 @@ const Videos: React.FC = () => {
             className="group relative"
           >
             <div 
-              className="relative aspect-square sm:aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer bg-black/40 border border-white/5 shadow-lg"
-              onClick={() => setActiveMedia(media)}
+              className="relative aspect-square sm:aspect-[4/3] rounded-2xl overflow-hidden bg-[#0a0f16] border border-white/5 shadow-lg"
             >
               {media.type === 'custom_video' ? (
-                <div className="w-full h-full relative">
-                  <video src={media.videoUrl} className="w-full h-full object-cover opacity-80" />
+                <a 
+                  href={media.videoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full h-full relative cursor-pointer block"
+                  style={{ backgroundImage: 'linear-gradient(to bottom right, #111, #222)' }}
+                >
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-full bg-black/50 text-gold flex items-center justify-center backdrop-blur-sm group-hover:scale-110 transition-transform">
-                      <Play size={24} fill="currentColor" />
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-16 h-16 rounded-full bg-[#1877F2]/20 text-[#1877F2] flex items-center justify-center backdrop-blur-sm group-hover:scale-110 transition-transform">
+                        <Play size={24} fill="currentColor" />
+                      </div>
+                      <span className="text-white font-bold text-sm bg-[#1877F2] px-4 py-2 rounded-full shadow-lg">فتح في فيسبوك</span>
                     </div>
                   </div>
-                </div>
+                </a>
               ) : (
-                <img 
-                  src={media.videoUrl} 
-                  alt="ميديا" 
-                  className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" 
-                />
+                <div 
+                  className="w-full h-full cursor-pointer"
+                  onClick={() => setActiveMedia(media)}
+                >
+                  <img 
+                    src={media.videoUrl} 
+                    alt="ميديا" 
+                    className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" 
+                  />
+                </div>
               )}
             </div>
 

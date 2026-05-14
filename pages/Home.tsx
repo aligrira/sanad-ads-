@@ -1,5 +1,5 @@
-import React from 'react';
-import { motion } from 'motion/react';
+import React, { useRef } from 'react';
+import { motion, useScroll, useTransform } from 'motion/react';
 import { ArrowLeft, Rocket, Brush, Video, Share2, Target, Users, Star, Smartphone, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -20,74 +20,91 @@ const ServiceCard = ({ icon: Icon, title, desc, delay }: any) => (
 );
 
 const Home: React.FC = () => {
+  const heroRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"]
+  });
+
+  const bgY1 = useTransform(scrollYProgress, [0, 1], ["0%", "40%"]);
+  const bgY2 = useTransform(scrollYProgress, [0, 1], ["0%", "-40%"]);
+  const contentY = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
+  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+
   return (
-    <div className="flex flex-col gap-20 pb-32">
+    <div className="flex flex-col gap-20 pb-32 overflow-hidden">
       {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center pt-20 overflow-hidden">
+      <section ref={heroRef} className="relative min-h-[90vh] flex items-center pt-20">
         {/* Background Gradients */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gold/10 rounded-full blur-[120px] -mr-64 -mt-64" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-navy rounded-full blur-[120px] -ml-48 -mb-48" />
+        <motion.div 
+          style={{ y: bgY1, opacity }}
+          className="absolute top-0 right-0 w-[500px] h-[500px] bg-gold/10 rounded-full blur-[120px] -mr-64 -mt-64" 
+        />
+        <motion.div 
+          style={{ y: bgY2, opacity }}
+          className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-navy rounded-full blur-[120px] -ml-48 -mb-48" 
+        />
         
-        <div className="px-6 grid lg:grid-cols-2 gap-12 items-center">
+        <div className="px-6 grid lg:grid-cols-2 gap-8 lg:gap-12 items-center w-full max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
+            style={{ y: contentY, opacity }}
+            className="flex flex-col z-10"
           >
             <div className="flex items-center gap-2 mb-4">
               <div className="h-px w-8 bg-gold" />
               <span className="text-gold font-medium tracking-widest text-xs uppercase">Sanad Ads Agency</span>
             </div>
             
-            <h1 className="text-5xl lg:text-7xl font-bold luxury-text leading-[1.1] mb-6">
+            <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold luxury-text leading-[1.3] mb-4 lg:mb-6">
               نصنع لك <span className="gold-text-gradient italic">حضوراً</span> يُعبّر عن علامتك
             </h1>
             
-            <p className="text-lg text-white/60 mb-8 max-w-lg leading-relaxed">
+            <p className="text-sm sm:text-base text-white/60 mb-8 max-w-lg leading-relaxed">
               سند للإعلان هي شريكك الإبداعي في بناء هويتك البصرية، إدارة حملاتك التسويقية، وصناعة محتوى رقمي استثنائي يضمن انتشارك.
             </p>
             
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 w-full">
               <Link 
                 to="/services" 
-                className="bg-gold text-black px-8 py-4 rounded-full font-bold flex items-center gap-2 hover:bg-gold-dark transition-all transform hover:scale-105"
+                className="bg-gold text-black px-6 py-4 lg:px-8 lg:py-4 rounded-full font-bold flex items-center justify-center gap-2 hover:bg-gold-dark transition-all transform hover:scale-105 w-full sm:w-auto"
               >
                 تصفح خدماتنا
                 <ArrowLeft size={20} />
               </Link>
               <Link 
                 to="/portfolio" 
-                className="border border-white/20 hover:border-gold/50 px-8 py-4 rounded-full font-bold transition-all"
+                className="border border-white/20 hover:border-gold/50 px-6 py-4 lg:px-8 lg:py-4 rounded-full font-bold transition-all text-center w-full sm:w-auto"
               >
                 مشاهدة أعمالنا
               </Link>
             </div>
-
-
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, scale: 0.9, rotateY: 20 }}
             animate={{ opacity: 1, scale: 1, rotateY: 0 }}
             transition={{ duration: 1, delay: 0.2 }}
-            className="relative hidden lg:block"
+            className="relative lg:block mt-8 lg:mt-0"
           >
-            <div className="aspect-square rounded-[40px] gold-gradient p-1">
-              <div className="w-full h-full rounded-[38px] bg-black overflow-hidden relative group">
+            <div className="aspect-square lg:aspect-[4/3] xl:aspect-square w-full max-w-[320px] sm:max-w-md lg:max-w-full mx-auto rounded-[2rem] lg:rounded-[40px] gold-gradient p-1">
+              <div className="w-full h-full rounded-[1.8rem] lg:rounded-[38px] bg-black overflow-hidden relative group">
                 <img 
                   src="https://images.unsplash.com/photo-1542744094-3a31f272c490?q=80&w=2670&auto=format&fit=crop" 
                   alt="Marketing" 
-                  className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-1000"
+                  className="w-full h-full object-contain sm:object-cover opacity-60 group-hover:scale-105 transition-transform duration-1000"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
-                <div className="absolute bottom-8 left-8 right-8">
-                  <div className="flex items-center gap-4 p-4 glass rounded-2xl">
-                    <div className="w-12 h-12 rounded-full bg-gold overflow-hidden">
-                      <img src="https://i.pravatar.cc/150?u=sanad" alt="Client" />
+                <div className="absolute bottom-6 left-6 right-6 lg:bottom-8 lg:left-8 lg:right-8">
+                  <div className="flex items-center gap-3 p-3 lg:p-4 glass rounded-2xl backdrop-blur-md border border-white/10">
+                    <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-gold overflow-hidden shrink-0">
+                      <img src="https://i.pravatar.cc/150?u=sanad" alt="Client" className="w-full h-full object-cover" />
                     </div>
                     <div>
-                      <div className="text-sm font-bold">إعلاناتنا تصل للجمهور المستهدف بدقة</div>
-                      <div className="text-xs text-gold">مبني على ذكاء إعلاني</div>
+                      <div className="text-xs lg:text-sm font-bold text-white leading-tight">إعلاناتنا تصل للجمهور المستهدف بدقة</div>
+                      <div className="text-[10px] lg:text-xs text-gold mt-1">مبني على ذكاء إعلاني</div>
                     </div>
                   </div>
                 </div>
@@ -100,7 +117,7 @@ const Home: React.FC = () => {
       {/* Services Section */}
       <section className="px-6">
         <div className="text-center mb-16">
-          <h2 className="text-3xl lg:text-5xl font-bold mb-4 luxury-text">خدماتنا الإبداعية</h2>
+          <h2 className="text-xl sm:text-3xl lg:text-5xl font-bold mb-4 luxury-text">خدماتنا الإبداعية</h2>
           <p className="text-white/50 max-w-2xl mx-auto">نقدم حلولاً متكاملة لتحويل علامتك التجارية إلى تجربة بصرية ورقمية فريدة</p>
         </div>
         
@@ -148,7 +165,7 @@ const Home: React.FC = () => {
       <section className="px-6 text-center">
         <div className="gold-gradient p-[1px] rounded-[40px]">
           <div className="bg-black rounded-[39px] py-16 px-6">
-            <h2 className="text-3xl lg:text-5xl font-bold luxury-text mb-6">هل أنت مستعد للتميز في عالمك الرقمي؟</h2>
+            <h2 className="text-2xl sm:text-3xl lg:text-5xl font-bold luxury-text mb-6">هل أنت مستعد للتميز في عالمك الرقمي؟</h2>
             <p className="text-white/60 mb-10 max-w-xl mx-auto">انضم لعشرات الشركات التي وثقت بنا لتحويل طموحاتها الإعلانية إلى واقع ملموس.</p>
             <Link 
               to="/contact" 

@@ -18,7 +18,7 @@ const PaymentInfo: React.FC = () => {
       color: 'gold',
       action: {
         text: 'تحميل / إفتح D17',
-        url: 'https://play.google.com/store/apps/details?id=tn.poste.d17'
+        url: 'https://play.google.com/store/apps/details?id=tn.mobipost'
       }
     },
     {
@@ -83,6 +83,8 @@ const PaymentInfo: React.FC = () => {
                   {method.action && (
                     <a
                       href={method.action.url}
+                      target="_blank"
+                      rel="noreferrer"
                       className="bg-gold/10 hover:bg-gold/20 text-gold px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold transition-colors text-sm sm:text-base text-center w-full sm:w-auto"
                     >
                       {method.action.text}

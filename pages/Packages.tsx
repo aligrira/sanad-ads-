@@ -38,7 +38,7 @@ const Packages: React.FC = () => {
   return (
     <div className="pt-32 pb-20 px-6 max-w-6xl mx-auto">
       <div className="text-center mb-16">
-        <h1 className="text-4xl lg:text-6xl font-bold luxury-text mb-6">الباقات <span className="gold-text-gradient">والأسعار</span></h1>
+        <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold luxury-text mb-6">الباقات <span className="gold-text-gradient">والأسعار</span></h1>
         <p className="text-white/60 text-lg max-w-2xl mx-auto">
           اختر الباقة التي تناسب تطلعاتك وابدأ رحلة النجاح معنا اليوم. أسعار تنافسية بجودة عالمية.
         </p>

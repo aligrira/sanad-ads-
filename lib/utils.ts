@@ -5,14 +5,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export async function compressImageBase64(file: File, maxWidth = 600, maxHeight = 600, quality = 0.5): Promise<string> {
+export async function compressImageBase64(file: File, maxWidth = 400, maxHeight = 400, quality = 0.4): Promise<string> {
   return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error("Image compression timed out."));
+    }, 10000);
+
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = (event) => {
       const img = new Image();
-      img.src = event.target?.result as string;
       img.onload = () => {
+        clearTimeout(timeout);
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
@@ -41,8 +45,15 @@ export async function compressImageBase64(file: File, maxWidth = 600, maxHeight 
         const dataUrl = canvas.toDataURL('image/jpeg', quality);
         resolve(dataUrl);
       };
-      img.onerror = (e) => reject(e);
+      img.onerror = (e) => {
+        clearTimeout(timeout);
+        reject(new Error("Failed to load image. It might be in an unsupported format like HEIC."));
+      };
+      img.src = event.target?.result as string;
     };
-    reader.onerror = (e) => reject(e);
+    reader.onerror = (e) => {
+      clearTimeout(timeout);
+      reject(e);
+    };
   });
 }

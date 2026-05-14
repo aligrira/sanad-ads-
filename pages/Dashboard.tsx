@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'motion/react';
-import { User, Settings, Package, History, LogOut, Bell, ChevronLeft, Loader2, CreditCard, Trash2, Smartphone } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { User, Settings, Package, History, LogOut, Bell, ChevronLeft, Loader2, CreditCard, Trash2, Smartphone, CheckCircle2, Info } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import { useNotifications } from '../lib/useNotifications';
 import { auth, db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { collection, query, where, orderBy, getDocs, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
+import { updateProfile, sendPasswordResetEmail } from 'firebase/auth';
 import { useNavigate, Link } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
@@ -14,6 +15,7 @@ const Dashboard: React.FC = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPaymentFor, setShowPaymentFor] = useState<string | null>(null);
+  const [message, setMessage] = useState<{type: 'success'|'error', text: string} | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -51,8 +53,44 @@ const Dashboard: React.FC = () => {
     if (!window.confirm('هل أنت متأكد من إلغاء هذا الطلب؟')) return;
     try {
       await deleteDoc(doc(db, 'serviceRequests', requestId));
+      showMessage('success', 'تم إلغاء الطلب بنجاح');
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `serviceRequests/${requestId}`);
+      showMessage('error', 'فشل إلغاء الطلب');
+    }
+  };
+
+  const showMessage = (type: 'success'|'error', text: string) => {
+    setMessage({ type, text });
+    setTimeout(() => setMessage(null), 3000);
+  };
+
+  const handleEditProfile = async () => {
+    const newName = window.prompt("أدخل اسمك الجديد:", user?.displayName || "");
+    if (newName && newName.trim() !== "" && user) {
+      try {
+        await updateProfile(user, { displayName: newName.trim() });
+        showMessage('success', 'تم تحديث الملف الشخصي بنجاح');
+        // Force refresh to show new name by reloading
+        window.location.reload(); 
+      } catch (error) {
+        showMessage('error', 'حدث خطأ أثناء تحديث الملف الشخصي');
+      }
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (user?.email) {
+      if (window.confirm('سيتم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني. هل أنت موافق؟')) {
+        try {
+          await sendPasswordResetEmail(auth, user.email);
+          showMessage('success', 'تم إرسال رابط تغير كلمة المرور إلى بريدك الإلكتروني');
+        } catch (error) {
+          showMessage('error', 'حدث خطأ أثناء إرسال الرابط');
+        }
+      }
+    } else {
+      showMessage('error', 'لا يوجد بريد إلكتروني مرتبط بحسابك');
     }
   };
 
@@ -91,71 +129,88 @@ const Dashboard: React.FC = () => {
   ];
 
   return (
-    <div className="pt-32 pb-20 px-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-12">
-        <div className="flex items-center gap-6">
-          <div className="w-20 h-20 rounded-full gold-gradient p-[1px]">
+    <div className="pt-24 pb-20 px-4 md:px-6 max-w-6xl mx-auto overflow-hidden">
+      <AnimatePresence>
+        {message && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className={`fixed top-24 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full flex items-center gap-2 text-sm font-bold shadow-2xl ${
+              message.type === 'success' ? 'bg-green-500 text-black' : 'bg-red-500 text-white'
+            }`}
+             style={{ direction: 'rtl' }}
+          >
+            {message.type === 'success' ? <CheckCircle2 size={18} /> : <Info size={18} />}
+            {message.text}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="flex flex-col md:flex-row items-center md:justify-between gap-6 mb-8 md:mb-12">
+        <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6 text-center md:text-right">
+          <div className="w-20 h-20 rounded-full gold-gradient p-[1px] shrink-0">
             <div className="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden">
                <img src={user?.photoURL || `https://ui-avatars.com/api/?name=${user?.displayName || 'U'}&background=D4AF37&color=000`} alt="User" />
             </div>
           </div>
           <div>
-            <h1 className="text-2xl font-bold luxury-text font-sans">أهلاً بك، {user?.displayName?.split(' ')[0]}</h1>
-            <p className="text-white/40 text-sm">{user?.email}</p>
+            <h1 className="text-xl md:text-2xl font-bold luxury-text font-sans mb-1">أهلاً بك، {user?.displayName?.split(' ')[0]}</h1>
+            <p className="text-white/40 text-xs md:text-sm" dir="ltr">{user?.email}</p>
           </div>
         </div>
         <button 
           onClick={handleLogout}
-          className="flex items-center gap-2 text-white/50 hover:text-red-400 transition-colors"
+          className="flex items-center gap-2 text-white/50 hover:text-red-400 transition-colors bg-white/5 md:bg-transparent px-4 py-2 md:p-0 rounded-xl md:rounded-none"
         >
-          <LogOut size={20} />
-          <span className="text-sm font-bold">تسجيل الخروج</span>
+          <LogOut size={18} />
+          <span className="text-xs md:text-sm font-bold">تسجيل الخروج</span>
         </button>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6 mb-12">
-        {stats.map((stat) => (
-          <div key={stat.label} className="glass p-6 rounded-3xl border-white/5">
-            <div className={`w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center mb-4 ${stat.color}`}>
-              <stat.icon size={20} />
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 mb-8 md:mb-12">
+        {stats.map((stat, idx) => (
+          <div key={stat.label} className={`glass p-4 md:p-6 rounded-[20px] md:rounded-3xl border-white/5 ${idx === 2 ? 'col-span-2 md:col-span-1' : ''}`}>
+            <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 flex items-center justify-center mb-3 md:mb-4 ${stat.color}`}>
+              <stat.icon size={18} className="md:w-5 md:h-5" />
             </div>
-            <div className="text-2xl font-bold mb-1">{stat.value}</div>
-            <div className="text-xs text-white/40 uppercase tracking-wider">{stat.label}</div>
+            <div className="text-xl md:text-2xl font-bold mb-1">{stat.value}</div>
+            <div className="text-[10px] md:text-xs text-white/40 uppercase tracking-wider">{stat.label}</div>
           </div>
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
+        <div className="lg:col-span-2 space-y-4 md:space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold">طلباتي الأخيرة</h2>
-            <button className="text-gold text-xs font-bold flex items-center gap-1">
-              عرض الكل <ChevronLeft size={14} />
-            </button>
+            <h2 className="text-lg md:text-xl font-bold">طلباتي الأخيرة</h2>
+            <Link to="/request-service" className="text-gold text-[10px] md:text-xs font-bold flex items-center gap-1 hover:underline">
+              اطلب خدمة جديدة <ChevronLeft size={14} />
+            </Link>
           </div>
           
           <div className="space-y-4">
             {orders.length === 0 ? (
-              <div className="glass p-12 rounded-[32px] border-dashed border-white/10 text-center">
-                <Package className="w-12 h-12 text-white/10 mx-auto mb-4" />
-                <p className="text-white/40">لا توجد طلبات سابقة حتى الآن.</p>
-                <Link to="/request-service" className="text-gold text-sm font-bold mt-4 inline-block">اطلب خدمتك الأولى الآن</Link>
+              <div className="glass p-8 md:p-12 rounded-[24px] md:rounded-[32px] border-dashed border-white/10 text-center">
+                <Package className="w-10 h-10 md:w-12 md:h-12 text-white/10 mx-auto mb-4" />
+                <p className="text-[10px] md:text-sm text-white/40">لا توجد طلبات سابقة حتى الآن.</p>
+                <Link to="/request-service" className="text-gold text-xs md:text-sm font-bold mt-4 inline-block">اطلب خدمتك الأولى الآن</Link>
               </div>
             ) : (
               orders.map((order) => (
-                <div key={order.id} className="glass p-6 rounded-[24px] border-white/5 space-y-4 group hover:border-gold/30 transition-all">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-white/40">
-                        <History size={24} />
+                <div key={order.id} className="glass p-4 md:p-6 rounded-[20px] md:rounded-[24px] border-white/5 space-y-4 group hover:border-gold/30 transition-all">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-3 w-full min-w-0">
+                      <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white/5 flex items-center justify-center text-white/40 shrink-0">
+                        <History size={20} className="md:w-6 md:h-6" />
                       </div>
-                      <div>
-                        <div className="font-bold">{order.service}</div>
-                        <div className="text-xs text-white/30 truncate max-w-[200px]">رقم الطلب: #{order.id.slice(-6)}</div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-bold text-sm md:text-base truncate">{order.service}</div>
+                        <div className="text-[9px] md:text-[10px] text-white/30 truncate">رقم الطلب: #{order.id.slice(-6)}</div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className={`text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-widest ${getStatusColor(order.status)}`}>
+                    <div className="shrink-0">
+                      <span className={`text-[9px] md:text-[10px] px-2 py-1 md:px-3 md:py-1 rounded-full font-bold uppercase tracking-widest ${getStatusColor(order.status)}`}>
                         {getStatusLabel(order.status)}
                       </span>
                     </div>
@@ -165,15 +220,15 @@ const Dashboard: React.FC = () => {
                     <motion.div 
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
-                      className="bg-gold/5 border border-gold/20 rounded-2xl p-6 space-y-4"
+                      className="bg-gold/5 border border-gold/20 rounded-2xl p-4 md:p-6 space-y-3 md:space-y-4"
                     >
                       <div className="flex justify-between items-center bg-black/40 p-3 rounded-xl border border-white/5">
-                        <span className="text-gold font-mono font-bold">29577989</span>
-                        <span className="text-[10px] font-bold">D17 (بريدي)</span>
+                        <span className="text-gold font-mono font-bold text-sm">29577989</span>
+                        <span className="text-[9px] md:text-[10px] font-bold">D17 (بريدي)</span>
                       </div>
                       <div className="flex justify-between items-center bg-black/40 p-3 rounded-xl border border-white/5">
                         <span 
-                          className="text-gold font-mono font-bold text-sm tracking-wider inline-flex gap-1" 
+                          className="text-gold font-mono font-bold text-[10px] md:text-sm tracking-widest inline-flex gap-1" 
                           dir="ltr"
                           style={{ direction: 'ltr', unicodeBidi: 'bidi-override' }}
                         >
@@ -181,7 +236,7 @@ const Dashboard: React.FC = () => {
                             <span key={i}>{chunk}</span>
                           ))}
                         </span>
-                        <span className="text-[10px] font-bold">بطاقة بريدية</span>
+                        <span className="text-[9px] md:text-[10px] font-bold">بطاقة بريدية</span>
                       </div>
                       <button 
                         onClick={() => setShowPaymentFor(null)}
@@ -191,23 +246,23 @@ const Dashboard: React.FC = () => {
                       </button>
                     </motion.div>
                   ) : (
-                    <div className="flex items-center gap-3 pt-2">
+                    <div className="flex items-center gap-2 md:gap-3 pt-2">
                        {order.status === 'pending' && (
                          <button 
                            onClick={() => setShowPaymentFor(order.id)}
-                           className="flex-1 bg-gold/10 text-gold py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-gold hover:text-black transition-all"
+                           className="flex-1 bg-gold/10 text-gold py-2.5 md:py-3 rounded-xl text-[10px] md:text-xs font-bold flex items-center justify-center gap-2 hover:bg-gold hover:text-black transition-all"
                          >
                            تأكيد الدفع
-                           <CreditCard size={14} />
+                           <CreditCard size={14} className="hidden sm:block" />
                          </button>
                        )}
                        {order.status === 'pending' && (
                          <button 
                            onClick={() => cancelRequest(order.id)}
-                           className="px-4 py-3 rounded-xl bg-red-500/5 text-red-500/50 hover:bg-red-500/10 hover:text-red-500 transition-all"
+                           className="px-3 py-2.5 md:px-4 md:py-3 rounded-xl bg-red-500/5 text-red-500/50 hover:bg-red-500/10 hover:text-red-500 transition-all shrink-0"
                            title="إلغاء الطلب"
                          >
-                           <Trash2 size={14} />
+                           <Trash2 size={16} />
                          </button>
                        )}
                     </div>
@@ -219,52 +274,69 @@ const Dashboard: React.FC = () => {
         </div>
 
         <div className="space-y-6">
-          <h2 className="text-xl font-bold">الحساب والإعدادات</h2>
-          <div className="glass rounded-[32px] overflow-hidden border-white/5">
-            <Link to="/payment-info" className="w-full p-6 flex items-center justify-between hover:bg-gold/5 transition-colors text-gold group">
-              <div className="flex items-center gap-4">
+          <h2 className="text-lg md:text-xl font-bold">الحساب والإعدادات</h2>
+          <div className="glass rounded-[24px] md:rounded-[32px] overflow-hidden border-white/5">
+            <Link to="/payment-info" className="w-full p-4 md:p-6 flex items-center justify-between hover:bg-gold/5 transition-colors text-gold group">
+              <div className="flex items-center gap-3 md:gap-4">
                 <CreditCard size={18} />
-                <span className="text-sm font-bold">طرق الدفع وتأكيد الطلب</span>
+                <span className="text-xs md:text-sm font-bold">طرق الدفع لتأكيد الطلب</span>
               </div>
               <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
             </Link>
-            {[
-              { label: 'تعديل الملف الشخصي', icon: User, path: '/dashboard' },
-              { label: 'إشعارات التطبيق', icon: Bell, path: '/notifications', badge: unreadCount > 0 ? unreadCount : null },
-              { label: 'تغيير كلمة المرور', icon: Settings, path: '/dashboard' },
-            ].map((item, i) => (
-              <Link 
-                key={item.label} 
-                to={item.path}
-                className={`w-full p-6 flex items-center justify-between hover:bg-white/5 transition-colors block ${i !== 0 ? 'border-t border-white/5' : ''}`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <item.icon size={18} className="text-white/40" />
-                    {item.badge && (
-                      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-[#0a0f16]" />
-                    )}
-                  </div>
-                  <span className="text-sm font-medium">{item.label}</span>
+            
+            <button 
+              onClick={handleEditProfile}
+              className="w-full text-right p-4 md:p-6 flex items-center justify-between hover:bg-white/5 transition-colors block border-t border-white/5"
+            >
+              <div className="flex items-center gap-3 md:gap-4">
+                <User size={18} className="text-white/40" />
+                <span className="text-xs md:text-sm font-medium">تعديل الملف الشخصي</span>
+              </div>
+              <ChevronLeft size={16} className="text-white/20" />
+            </button>
+
+            <Link 
+              to="/notifications"
+              className="w-full p-4 md:p-6 flex items-center justify-between hover:bg-white/5 transition-colors block border-t border-white/5"
+            >
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="relative">
+                  <Bell size={18} className="text-white/40" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-[#0a0f16]" />
+                  )}
                 </div>
-                <ChevronLeft size={16} className="text-white/20" />
-              </Link>
-            ))}
+                <span className="text-xs md:text-sm font-medium">إشعارات التطبيق</span>
+              </div>
+              <ChevronLeft size={16} className="text-white/20" />
+            </Link>
+
+            <button 
+              onClick={handleResetPassword}
+              className="w-full text-right p-4 md:p-6 flex items-center justify-between hover:bg-white/5 transition-colors block border-t border-white/5"
+            >
+              <div className="flex items-center gap-3 md:gap-4">
+                <Settings size={18} className="text-white/40" />
+                <span className="text-xs md:text-sm font-medium">تغيير كلمة المرور</span>
+              </div>
+              <ChevronLeft size={16} className="text-white/20" />
+            </button>
+
             <button
               onClick={handleLogout}
-              className="w-full p-6 flex items-center justify-between hover:bg-red-500/10 transition-colors border-t border-white/5 text-red-500"
+              className="w-full p-4 md:p-6 flex items-center justify-between hover:bg-red-500/10 transition-colors border-t border-white/5 text-red-500"
             >
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 md:gap-4">
                 <LogOut size={18} />
-                <span className="text-sm font-bold">تسجيل الخروج</span>
+                <span className="text-xs md:text-sm font-bold">تسجيل الخروج</span>
               </div>
             </button>
           </div>
           
-          <div className="glass p-6 rounded-[32px] border-gold/10 bg-gold/[0.02]">
-            <h3 className="font-bold mb-2">تحتاج مساعدة؟</h3>
-            <p className="text-xs text-white/40 leading-relaxed mb-4">الدعم الفني متاح 24/7 لمساعدتك في تتبع طلباتك أو الإجابة على استفساراتك.</p>
-            <a href="tel:+21692942482" className="text-gold text-xs font-bold block">اتصل بنا الآن</a>
+          <div className="glass p-5 md:p-6 rounded-[24px] md:rounded-[32px] border-gold/10 bg-gold/[0.02]">
+            <h3 className="font-bold mb-2 text-sm md:text-base">تحتاج مساعدة؟</h3>
+            <p className="text-[10px] md:text-xs text-white/40 leading-relaxed mb-4">الدعم الفني متاح 24/7 لمساعدتك في تتبع طلباتك أو الإجابة على استفساراتك.</p>
+            <a href="tel:+21692942482" className="text-gold text-[10px] md:text-xs font-bold block">اتصل بنا الآن</a>
           </div>
         </div>
       </div>

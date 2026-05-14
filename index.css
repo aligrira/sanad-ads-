@@ -11,12 +11,25 @@
   --color-navy: #0F172A;
 }
 
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+  position: relative;
+}
+
 body {
   @apply bg-black text-white selection:bg-gold selection:text-black antialiased;
   font-family: var(--font-sans);
   direction: rtl;
-  overflow-x: hidden;
-  width: 100%;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .luxury-text {
@@ -70,3 +83,4 @@ body {
   background-size: 200% 100%;
   animation: gold-shine 3s linear infinite;
 }
+

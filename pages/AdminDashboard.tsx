@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Package, Clock, CheckCircle2, XCircle, Search, MessageSquare, ExternalLink, Loader2, ArrowRight, Trash2, User, Video, LogOut, Send } from 'lucide-react';
 import { db, auth, handleFirestoreError, OperationType } from '../lib/firebase';
 import { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, addDoc } from 'firebase/firestore';
@@ -11,9 +11,22 @@ const ADMIN_EMAILS = ['aligrira9@gmail.com', 'aligrira2021@gmail.com'].map(e => 
 const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'requests' | 'users'>('requests');
+  const [activeTab, setActiveTab] = useState<'requests' | 'users' | 'messages'>('requests');
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (actionSuccess || actionError) {
+      const timer = setTimeout(() => {
+        setActionSuccess(null);
+        setActionError(null);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [actionSuccess, actionError]);
   const [requests, setRequests] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [customMessages, setCustomMessages] = useState<Record<string, string>>({});
@@ -48,9 +61,18 @@ const AdminDashboard: React.FC = () => {
       console.error("Admin Access Error (Users):", error);
     });
 
+    const qMessages = query(collection(db, 'contactMessages'), orderBy('createdAt', 'desc'));
+    const unsubscribeMessages = onSnapshot(qMessages, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setMessages(data);
+    }, (error) => {
+      console.error("Admin Access Error (Messages):", error);
+    });
+
     return () => {
       unsubscribeRequests();
       unsubscribeUsers();
+      unsubscribeMessages();
     };
   }, [user, navigate]);
 
@@ -113,23 +135,22 @@ const AdminDashboard: React.FC = () => {
         read: false,
         createdAt: Date.now()
       });
-      alert('تم إرسال الإشعار للعميل بنجاح');
+      setActionSuccess('تم إرسال الإشعار للعميل بنجاح');
       setCustomMessages(prev => ({ ...prev, [requestId]: '' }));
     } catch (error) {
       console.error("Custom Notification Error:", error);
-      alert('خطأ أثناء إرسال الرسالة');
+      setActionError('خطأ أثناء إرسال الرسالة');
     }
   };
 
   const deleteRequest = async (requestId: string) => {
     if (!window.confirm('هل أنت متأكد من حذف هذا الطلب نهائياً؟')) return;
-    
     try {
       await deleteDoc(doc(db, 'serviceRequests', requestId));
-      alert('تم حذف الطلب بنجاح');
+      setActionSuccess('تم حذف الطلب بنجاح');
     } catch (error: any) {
       console.error("Delete Request Error:", error);
-      alert('فشل حذف الطلب: ' + (error.message || 'عذراً، لا تملك الصلاحيات الكافية لهذا الإجراء.'));
+      setActionError('فشل حذف الطلب: ' + (error.message || 'عذراً، لا تملك الصلاحيات الكافية لهذا الإجراء.'));
     }
   };
 
@@ -137,24 +158,23 @@ const AdminDashboard: React.FC = () => {
     if (!window.confirm('هل أنت متأكد من حذف هذا العميل وجميع بياناته؟')) return;
     try {
       await deleteDoc(doc(db, 'users', userId));
-      alert('تم حذف العميل بنجاح');
+      setActionSuccess('تم حذف العميل بنجاح');
     } catch (error: any) {
       console.error("Delete User Error:", error);
-      alert('فشل حذف العميل: ' + (error.message || 'عذراً، لا تملك الصلاحيات الكافية لهذا الإجراء.'));
+      setActionError('فشل حذف العميل: ' + (error.message || 'عذراً، لا تملك الصلاحيات الكافية لهذا الإجراء.'));
     }
   };
 
   const toggleBlockUser = async (userId: string, currentStatus: boolean) => {
     const action = currentStatus ? 'فك حظر' : 'حظر';
-    if (!window.confirm(`هل أنت متأكد من ${action} هذا العميل؟`)) return;
     try {
       await updateDoc(doc(db, 'users', userId), {
         isBlocked: !currentStatus
       });
-      alert(`تم ${action} العميل بنجاح`);
+      setActionSuccess(`تم ${action} العميل بنجاح`);
     } catch (error) {
       console.error(error);
-      alert(`فشل ${action} العميل.`);
+      setActionError(`فشل ${action} العميل.`);
     }
   };
 
@@ -175,20 +195,30 @@ const AdminDashboard: React.FC = () => {
         </div>
         
         <div className="flex flex-col md:flex-row gap-4 items-center">
-          <div className="flex gap-4 p-1 bg-white/5 rounded-2xl border border-white/10">
+          <div className="flex w-full overflow-x-auto whitespace-nowrap gap-2 p-1 bg-white/5 rounded-2xl border border-white/10 hide-scrollbar">
             <button
               onClick={() => setActiveTab('requests')}
-              className={`px-8 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'requests' ? 'bg-gold text-black' : 'text-white/50 hover:text-white'}`}
+              className={`flex-1 min-w-[100px] px-4 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === 'requests' ? 'bg-gold text-black' : 'text-white/50 hover:text-white'}`}
             >
               <Package size={18} />
               الطلبات
             </button>
             <button
               onClick={() => setActiveTab('users')}
-              className={`px-8 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'users' ? 'bg-gold text-black' : 'text-white/50 hover:text-white'}`}
+              className={`flex-1 min-w-[100px] px-4 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === 'users' ? 'bg-gold text-black' : 'text-white/50 hover:text-white'}`}
             >
               <User size={18} />
               العملاء
+            </button>
+            <button
+              onClick={() => setActiveTab('messages')}
+              className={`flex-1 min-w-[100px] px-4 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === 'messages' ? 'bg-gold text-black' : 'text-white/50 hover:text-white'}`}
+            >
+              <MessageSquare size={18} />
+              الرسائل
+              {messages.filter(m => !m.read).length > 0 && (
+                <span className="w-2.5 h-2.5 bg-red-500 rounded-full border border-black shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
+              )}
             </button>
           </div>
           <button 
@@ -199,6 +229,33 @@ const AdminDashboard: React.FC = () => {
             <span className="text-sm font-bold">تسجيل الخروج</span>
           </button>
         </div>
+      </div>
+
+      {/* Toast Notifications */}
+      <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-full max-w-md px-4 pointer-events-none">
+        <AnimatePresence>
+          {actionSuccess && (
+            <motion.div 
+               initial={{ opacity: 0, y: -20 }}
+               animate={{ opacity: 1, y: 0 }}
+               exit={{ opacity: 0, y: -20 }}
+               className="bg-[#25D366] text-white p-4 rounded-xl shadow-2xl shadow-green-900/20 flex items-center gap-3 text-sm font-bold w-full" dir="rtl">
+              <CheckCircle2 size={20} />
+              {actionSuccess}
+            </motion.div>
+          )}
+          
+          {actionError && (
+            <motion.div
+               initial={{ opacity: 0, y: -20 }}
+               animate={{ opacity: 1, y: 0 }}
+               exit={{ opacity: 0, y: -20 }}
+               className="bg-red-500 text-white p-4 rounded-xl shadow-2xl shadow-red-900/20 flex items-center gap-3 text-sm font-bold w-full" dir="rtl">
+              <XCircle size={20} />
+              {actionError}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {activeTab === 'requests' ? (
@@ -393,7 +450,7 @@ const AdminDashboard: React.FC = () => {
             )}
           </div>
         </>
-      ) : (
+      ) : activeTab === 'users' ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {users.map((u) => (
             <div key={u.id} className={`glass p-6 rounded-[32px] border-white/5 flex flex-col items-center text-center relative overflow-hidden ${u.isBlocked ? 'border-red-500/30' : ''}`}>
@@ -444,6 +501,50 @@ const AdminDashboard: React.FC = () => {
             <div className="col-span-full py-20 text-center glass rounded-[40px] border-dashed border-white/10">
               <User className="w-16 h-16 text-white/10 mx-auto mb-4" />
               <p className="text-white/40 text-lg">لا يوجد عملاء مسجلون حالياً.</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {messages.map((msg) => (
+            <div key={msg.id} className={`glass p-8 rounded-[40px] border-white/5 transition-all text-right ${!msg.read ? 'border-gold/30' : ''}`}>
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h3 className="text-xl font-bold mb-1">{msg.name}</h3>
+                  <p className="text-sm font-mono text-white/50">{msg.email}</p>
+                </div>
+                <span className="text-xs text-white/30">{msg.createdAt?.toDate?.()?.toLocaleString('ar-TN')}</span>
+              </div>
+              <div className="bg-black/30 p-6 rounded-3xl mb-6">
+                <p className="text-white/80 leading-relaxed whitespace-pre-wrap">{msg.message}</p>
+              </div>
+              <div className="flex gap-4">
+                {!msg.read && (
+                  <button 
+                    onClick={async () => {
+                      try {
+                        await updateDoc(doc(db, 'contactMessages', msg.id), { read: true });
+                      } catch(e) {}
+                    }}
+                    className="px-6 py-2 bg-gold/10 text-gold rounded-xl text-sm font-bold hover:bg-gold hover:text-black transition-colors"
+                  >
+                    تحديد كمقروء
+                  </button>
+                )}
+                <a 
+                  href={`mailto:${msg.email}`}
+                  className="px-6 py-2 bg-white/5 border border-white/10 rounded-xl text-sm font-bold hover:bg-white/10 transition-colors"
+                >
+                  رد عبر البريد
+                </a>
+              </div>
+            </div>
+          ))}
+
+          {messages.length === 0 && (
+            <div className="py-20 text-center glass rounded-[40px] border-dashed border-white/10">
+              <MessageSquare className="w-16 h-16 text-white/10 mx-auto mb-4" />
+              <p className="text-white/40 text-lg">لا توجد رسائل جديدة.</p>
             </div>
           )}
         </div>

@@ -59,7 +59,7 @@ const RequestService: React.FC = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const filesArray = Array.from(e.target.files);
+      const filesArray = Array.from(e.target.files) as File[];
       const invalidVideos = filesArray.filter(f => f.type.startsWith('video/'));
       if (invalidVideos.length > 0) {
         alert('نعتذر، لا يمكن رفع فيديوهات مباشرة حالياً بسبب قيود المساحة. يرجى رفع الفيديوهات على Google Drive أو YouTube ووضع الرابط في المربع المخصص للروابط أسفل هذه الصفحة.');
@@ -91,8 +91,9 @@ const RequestService: React.FC = () => {
         urls.push(base64string);
         completedFiles++;
         setUploadProgress((completedFiles / totalFiles) * 100);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Image compression error:", err);
+        throw new Error(err.message || 'حدث خطأ أثناء معالجة الصور (صيغة غير مدعومة).');
       }
     }
     return urls;
@@ -143,7 +144,11 @@ const RequestService: React.FC = () => {
       setIsSuccess(true);
     } catch (err: any) {
       console.error(err);
-      setError('فشل إرسال الطلب أو رفع الملفات. يرجى التأكد من اتصالك والمحاولة ثانية.');
+      if (err.message && err.message.includes("exceeds the maximum")) {
+        setError('حجم الصور كبير جداً. حاول اختيار صور أقل عدداً أو ذات حجم أصغر.');
+      } else {
+        setError(err.message || 'فشل إرسال الطلب أو رفع الملفات. يرجى التأكد من اتصالك والمحاولة ثانية.');
+      }
     } finally {
       setLoading(false);
       setUploadProgress(0);
@@ -293,8 +298,9 @@ const RequestService: React.FC = () => {
                   type="tel" 
                   value={formData.phone}
                   onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:border-gold outline-none transition-all" 
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:border-gold outline-none transition-all text-left" 
                   placeholder="+216"
+                  dir="ltr"
                 />
               </div>
             </div>
@@ -304,8 +310,9 @@ const RequestService: React.FC = () => {
                 type="email" 
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:border-gold outline-none transition-all" 
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:border-gold outline-none transition-all text-left" 
                 placeholder="example@mail.com" 
+                dir="ltr"
               />
             </div>
           </div>

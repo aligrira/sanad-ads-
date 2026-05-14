@@ -65,7 +65,8 @@ const ForgotPassword: React.FC = () => {
                 <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
                 <input 
                   type="email" 
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl pr-12 pl-6 py-4 focus:border-gold outline-none transition-all" 
+                  dir="ltr"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl pr-12 pl-6 py-4 focus:border-gold outline-none transition-all text-left" 
                   placeholder="email@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}

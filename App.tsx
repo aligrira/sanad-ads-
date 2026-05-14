@@ -76,35 +76,35 @@ const App: React.FC = () => {
               key="splash"
               initial={{ opacity: 1 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.8, ease: "easeInOut" }}
-              className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center"
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.6, ease: "easeInOut" }}
+              className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6"
             >
               <motion.div
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ 
-                  duration: 0.8,
-                  repeat: Infinity,
-                  repeatType: "reverse"
-                }}
-                className="w-24 h-24 rounded-full gold-gradient flex items-center justify-center text-black text-4xl font-bold luxury-text mb-8 shadow-[0_0_50px_rgba(212,175,55,0.3)]"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                className="relative w-full max-w-sm aspect-square max-h-[60vh] flex items-center justify-center"
               >
-                S
+                {/* Fallback elegant Logo when no injected image is found -> We structure it so if user replaces it with an img tag later, it will be contained */}
+                <div className="w-32 h-32 rounded-[2rem] gold-gradient flex items-center justify-center text-black text-6xl font-bold luxury-text mb-8 shadow-[0_0_80px_rgba(212,175,55,0.4)]">
+                  S
+                </div>
               </motion.div>
               <motion.div
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
-                className="flex flex-col items-center gap-2"
+                className="flex flex-col items-center gap-3 mt-8"
               >
-                <h1 className="text-2xl font-bold uppercase luxury-text tracking-[0.3em] font-sans">Sanad Ads</h1>
-                <div className="w-48 h-[1px] bg-white/10 relative overflow-hidden">
+                <h1 className="text-3xl font-bold uppercase luxury-text tracking-[0.3em] text-white">Sanad Ads</h1>
+                <p className="text-gold font-medium tracking-widest text-xs">مساحتك لانتشار علامتك</p>
+                <div className="w-32 h-[2px] bg-white/10 relative overflow-hidden mt-4 rounded-full">
                   <motion.div 
                     initial={{ x: "-100%" }}
                     animate={{ x: "100%" }}
-                    transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                    className="absolute inset-0 bg-gold"
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute inset-0 bg-gold rounded-full"
                   />
                 </div>
               </motion.div>
@@ -115,11 +115,11 @@ const App: React.FC = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 1, ease: "easeOut" }}
-              className="min-h-screen bg-black transition-colors duration-500"
+              className="min-h-screen bg-black transition-colors duration-500 overflow-x-hidden"
             >
               <DesktopNav />
               
-              <main className="container mx-auto">
+              <main className="container mx-auto pt-4 md:pt-0">
                 <AnimatedRoutes />
               </main>
     

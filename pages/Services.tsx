@@ -53,7 +53,7 @@ const Services: React.FC = () => {
         >
           خدماتنا المتكاملة
         </motion.span>
-        <h1 className="text-4xl lg:text-6xl font-bold luxury-text mb-6">ماذا نقدم <span className="gold-text-gradient">لأعمالك</span>؟</h1>
+        <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold luxury-text mb-6">ماذا نقدم <span className="gold-text-gradient">لأعمالك</span>؟</h1>
         <p className="text-white/60 text-lg max-w-2xl mx-auto">
           نحن نوفر لك كل ما تحتاجه للنجاح في الفضاء الرقمي، من التصميم إلى الوصول للعميل النهائي.
         </p>

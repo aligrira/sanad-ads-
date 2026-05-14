@@ -49,7 +49,7 @@ const Contact: React.FC = () => {
           animate={{ opacity: 1, x: 0 }}
         >
           <span className="text-gold font-medium tracking-[0.2em] text-xs uppercase block mb-4">اتصل بنا</span>
-          <h1 className="text-4xl lg:text-6xl font-bold luxury-text mb-6">نحن هنا <br /><span className="gold-text-gradient">لسماع أفكارك</span></h1>
+          <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold luxury-text mb-6">نحن هنا <br /><span className="gold-text-gradient">لسماع أفكارك</span></h1>
           <p className="text-white/60 text-lg mb-12 leading-relaxed">
             فريق سند للإعلان جاهز للرد على جميع استفساراتك وتقديم الاستشارات اللازمة لمشروعك. لا تتردد في التواصل معنا.
           </p>
